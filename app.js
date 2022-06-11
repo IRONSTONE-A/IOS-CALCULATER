@@ -1,121 +1,137 @@
-class Calculator{
+//* =================================================
+//*                     IOS CALCULATOR
+//* =================================================
+//? Ekranlar
+const prevDisp = document.querySelector('.previous-display');
+const currDisp = document.querySelector('.current-display');
 
-    constructor(input, output) {
-        this.inputDisplay=input;
-        this.outputDisplay=output;
-        this.inputHistory=[];
-    }
-    clearAllHistory() {
-        this.inputHistory=[];
-        this.updateInputDisplay();
-        this.updateOutputDisplay("0");
+//?Button container
+const btnContainer = document.querySelector('.buttons-container');
 
-    }
-    backspace() {}
-    changePercentToDecimal() {}
-    insertNumber(value) {
-        if(this.getLastInputType()==="number"){
-            this.appendToLastInput(value);
-        }
-        else if(this.getLastInputType()==="operator"|| this.getLastInputType()=== null){
-            this.addNewInput(value,"number");
-        }
-    }
-    insertOperation(value) {}
-    negateNumber() {}
-    insertDecimalPoint() {}
-    generateResult() {}
-   // HELPER FUNCTIONS
-   getLastInputType(){
-       return (this.inputHistory===0) ? null: this.inputHistory[this.inputHistory.length-1].type;
-   }
+//? ara degerler icin degisken tanimlamalari
+let currOperand = '';
+let previousOperand = '';
+let operation = '';
 
-   getLastInputValue(){
-    return (this.inputHistory===0) ? null: this.inputHistory[this.inputHistory.length-1].value;
+let equalOrPercentPressed = false;
+
+//? Butonlari tasiyan container icin event tanimlamasi
+btnContainer.addEventListener('click', (e) => {
+  //? Herhangi bir sayi(num) sayiya tiklanildi ise
+  if (e.target.classList.contains('num')) {
+    appendNumber(e.target.textContent);
+    updateDisplay();
   }
 
-   getAllInputValues(){
-    return this.inputHistory.map(entry=>entry.value);
+  //? Herhangi bir operator butonuna (+,-,x,/) tiklanildi ise
+  if (e.target.classList.contains('operator')) {
+    chooseOperator(e.target.textContent);
+    updateDisplay();
+  }
+  //? Esittir butonuna tiklanildi ise
+  if (e.target.classList.contains('equal')) {
+    calculate();
+    updateDisplay();
+    equalOrPercentPressed = true;
   }
 
-  getOutputValue(){
-    return this.outputDisplay.value.replace(/,/g,"");
-
+  //? AC butonuna tiklanildi ise
+  if (e.target.classList.contains('ac')) {
+    previousOperand = '';
+    currOperand = '';
+    operation = '';
+    updateDisplay();
   }
 
-addNewInput(value,type){
-        this.inputHistory.push({"type": type, "value":value.toString()});
-        this.updateInputDisplay();
-}
-
-appendToLastInput(value){
-    this.inputHistory[this.inputHistory.length-1].value +=value.toString();
-    this.updateInputDisplay();
-}
-
-
-   updateInputDisplay(){
-    this.inputDisplay.value=this.getAllInputValues().join("");
+  //? PM butonuna tiklanildi ise
+  if (e.target.classList.contains('pm')) {
+    if (!currOperand) return;
+    currOperand *= -1;
+    updateDisplay();
   }
 
-  updateOutputDisplay(value){
-    this.outputDisplay.value=Number(value).toLocaleString();
+  //? Percent butonuna tiklanildi ise
+  if (e.target.classList.contains('percent')) {
+    if (!currOperand) return;
+    currOperand = currOperand / 100;
+    updateDisplay();
+    equalOrPercentPressed = true;
   }
-                             
+});
 
-  }// End Calculator Class Definition
+const appendNumber = (num) => {
+  //? Eger onceden 0 girilmisse ve tekrardan 0 girilise geri don
+  if (currOperand === '0' && num === '0') return;
 
-  // Create bindings to access DOM elements
-  const inputDisplay=document.querySelector("#history");
-  const outputDisplay =document.querySelector("#result");
+  //? Eğer ilk olarak 0 girilmisse ve sonrasinda da . haricinde baska
+  //? bir sayi girilmis ise sadece girilen yeni sayiyi degiskene aktar.
+  //? Orn: 09 => 9 , 03 => 3 , 0.1 => 0.1
+  if (currOperand === '0' && num !== '.') {
+    currOperand = num;
+    return;
+  }
 
-  const allClearButton=document.querySelector("[data-all-clear]");
-  const backspaceButton=document.querySelector("[data-backspace]");
-  const percentButton=document.querySelector("[data-percent]");
-  const operationButtons=document.querySelectorAll("[data-operator]");
-  const numberButtons=document.querySelectorAll("[data-number]");
-  const negationButton=document.querySelector("[data-negation]");
-  const decimalButton=document.querySelector("[data-decimal]");
-  const equalsButton=document.querySelector("[data-equals]");
+  //? Eğer şu anki sayi . ise ve önceki girilen sayi . iceriyorsa geri don
+  if (num === '.' && currOperand.includes('.')) return;
 
-  // Createanew Calculator
-  const calculator=new Calculator(inputDisplay,outputDisplay);
+  if (currOperand.length > 10) return;
 
-  // Add event handlers to the calculator buttons
-  allClearButton.addEventListener("click",()=>{
-   calculator.clearAllHistory()
-  })
+  if (equalOrPercentPressed) {
+    currOperand = num;
+    equalOrPercentPressed = false;
+    return;
+  }
+  //? Girilen sayilari birlestir.
+  currOperand += num;
+};
 
-  backspaceButton.addEventListener("click",()=>{
-    calculator.backspace();
-  });
-  percentButton.addEventListener("click",()=>{
-    calculator.change Percent ToDecimal();
-  });
+const updateDisplay = () => {
+  if (currOperand.toString().length > 11) {
+    currOperand = Number(currOperand).toExponential(3);
+  }
+  currDisp.textContent = currOperand;
+  prevDisp.textContent = `${previousOperand} ${operation}`;
+};
 
-  operationButtons.forEach(button=>{
-    button.addEventListener("click",(event)=>{
-      let(target)=event;
-                                     
-      calculator.insertOperation(target.dataset.operator);
-    })
-  });
-  numberButtons.forEach(button=>{
-    button.addEventListener("click",(event)=>{
-      let{target}=event;
-      calculator.insertNumber(target.dataset.number);
-    })
-  });
+const chooseOperator = (op) => {
+  //? ilk sayi girisiinden sonraki islemleri gercekletir
+  if (previousOperand) {
+    calculate();
+  }
 
-  negationButton.addEventListener("click",()=>{
-    calculator.negateNumber();
-   });
+  //? Degisken swapiing
+  operation = op;
+  previousOperand = currOperand;
+  currOperand = '';
+};
 
-   decimalButton.addEventListener("click",()=>{
-     calculator.insertDecimalPoint();
-   });
+const calculate = () => {
+  let calculation = 0;
 
-   equalsButton.addEventListener("click",()=>{
-    calculator.generateResult();
-   });
+  const prev = Number(previousOperand);
+  const current = Number(currOperand);
 
+  switch (operation) {
+    case '+':
+      calculation = prev + current;
+      break;
+    case '-':
+      calculation = prev - current;
+      break;
+    case 'x':
+      calculation = prev * current;
+      break;
+    case '÷':
+      calculation = prev / current;
+      break;
+    default:
+      return;
+  }
+
+  currOperand = calculation;
+
+  //? Esittir butonuna tiklanildiginda ekranda gozukmemesi icin
+  //? previousOperand ve operation'ı silmemiz gerekir
+  previousOperand = '';
+  operation = '';
+};
