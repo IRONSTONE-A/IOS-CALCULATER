@@ -90,7 +90,14 @@ const updateDisplay = () => {
     currOperand = Number(currOperand).toExponential(3);
   }
   currDisp.textContent = currOperand;
-  prevDisp.textContent = `${previousOperand} ${operation}`;
+
+  //! Eger bir sayiya basilmadan operator butonlarina basilirsa
+  //! prevDisp'de operatoru gosterme
+  if (operation && previousOperand) {
+    prevDisp.textContent = `${previousOperand} ${operation}`;
+  } else {
+    prevDisp.textContent = '';
+  }
 };
 
 const chooseOperator = (op) => {
